@@ -10,6 +10,7 @@
 * [Chapter 1: Reliable, Scalable, and Maintainable Applications](#chapter-1)
 * [Chapter 2: Data Models and Query Languages](#chapter-2)
 * [Chapter 3: Storage and Retrieval](#chapter-3)
+* [Chapter 4: Encoding and Envolution](#chapter-4)
 
 
 
@@ -72,9 +73,30 @@
 1. Why Graph database is not relational database
 
 ### <a name="chapter-3"></a>Chapter 3: Storage and Retrieval
+- **OLTP(Online Transaction Processing)**: The following type of school means the design of indexing
+  - **Log-Structured School** like LSM-Trees(Log structure merge tree), SSTable(Sorted String Table)
+    - Write O(1), Read using HashTable
+    - Compaction needed for key-value update log
+    - Sorted structure can make compaction faster, and make find operation faster
+    - Throughput preferred
+    - Faster for write
+    
+  - **Update-in-Place School(Online Analytics Processing)** like B-Tree
+    - Imagine binary tree with branch factor of 500
+    - A B-Tree with n keys always has a depth of O(log n)
+    - Write ahead log implemented in case of crash
+    - Latency Preferred
+    - Faster for Read
 
+- **OLAP** **Data Warehouse**
+  - **ETL**: Extract, Transform and Load
+  - Data Warehouse is a separate read-only db that analysts can query to their heart contents without affecting OLTP operations
+  - Stars and Snowflakes: snowflakes is more detailed stars schema
+  - Column-Oriented Storage
+    - Easier to analyse: if some analysis need to sort by column, select p from table where p.price > 100
+    - For compression use
+    - Sort Order in Column Storage
+    - Write to Column-Oriented Storage by LST-Tree, because update-in-place approach cannot write in compressed columns
+    - Aggregation: Calculate **presum** for each row * column, which reduce the cost to loop through the table per query
 
-
-
-
-
+### <a name="chapter-4"></a>Chapter 4: Encoding and Envolution
