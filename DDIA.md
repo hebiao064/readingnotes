@@ -2,7 +2,6 @@
 
 ## Resource
 [English Version](https://github.com/sjtuhjh/appdocs/blob/master/BooksAndPapers/GeneralPapers/Designing%20Data-Intensive%20Applications.pdf)
-
 [Chinese Version](https://github.com/Vonng/ddia/blob/master/ch3.md)
 
 ## Table of Contents
@@ -14,7 +13,7 @@
 
 
 
-
+## Contents
 ### <a name="chapter-1"></a>Chapter 1: Reliable, Scalable, and Maintainable Applications
 
 - **Data-Intensive** vs Compute-Intensive
@@ -96,7 +95,7 @@
     - Easier to analyse: if some analysis need to sort by column, select p from table where p.price > 100
     - For compression use
     - Sort Order in Column Storage
-    - Write to Column-Oriented Storage by LST-Tree, because update-in-place approach cannot write in compressed columns
+    - Write to Column-Oriented Storage by LSM-Tree, because update-in-place approach cannot write in compressed columns
     - Aggregation: Calculate **presum** for each row * column, which reduce the cost to loop through the table per query
 
 ### <a name="chapter-4"></a>Chapter 4: Encoding and Envolution
