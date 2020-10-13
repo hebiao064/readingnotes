@@ -19,13 +19,16 @@
 
 Reference: 
 - [彻底搞懂 MySQL 事务的隔离级别](https://developer.aliyun.com/article/743691)
-- [中文DDIA 解读](https://raw.githubusercontent.com/Vonng/ddia/master/ch7.md)
+- [中文DDIA 解读 事务篇](https://raw.githubusercontent.com/Vonng/ddia/master/ch7.md)
 
-Four Possible Concurrent Read Write Problems: 
-- Dirty Reads
-- Dirty Writes
-- Unrepeatable Reads (Read Skew)
-- Phathom (Write Skew)
+### Cheat Sheet:
+| Problem Name                       | Naive Representation        | Solution Isolation Level   | Solution Summary                                  |
+|------------------------------------|-----------------------------|----------------------------|---------------------------------------------------|
+| 0. All Read, no problem            | Read1 Read2 Read2 Read1     | Read Uncommitted           | N/A                                               |
+| 1. Dirty Reads                     | Write1 Read2 Read2 Write1   | Read Committed             | Read old value when uncommited                    |
+| 2. Dirty Writes                    | Write1 Write2 Write2 Write1 | Read Committed             | Add row lock for Write                            |
+| 3. Unrepeatable Reads  (Read Skew) | Read1 Write2 Write2 Read1   | Snapshot Isolation  (MVCC) | Read the corresponding  snapshot at specific time |
+| 4. Phantoms  (Write Skew)          | Read1 Read2 Write1 Read2    | Serialization              | Actual Serial Execution; 2 Phase Lock; SSI;       |
 
 #### 0. Read1 Read2 Read2 Read1 All Read  => No Problem without any Isolation Implemented => No solution needed 
 
@@ -75,3 +78,48 @@ Four Possible Concurrent Read Write Problems:
 - 字面意义上地串行顺序执行事务（参见“[真的串行执行](#真的串行执行)”）
 - **两相锁定（2PL, two-phase locking）**，几十年来唯一可行的选择。（参见“[两相锁定（2PL）](#两阶段锁定（2PL）)”）
 - 乐观并发控制技术，例如**可序列化的快照隔离（serializable snapshot isolation）**（参阅“[可序列化的快照隔离（SSI）](#序列化快照隔离（SSI）)”
+
+
+### Summary
+
+本章深入讨论了**并发控制**的话题。我们讨论了几个广泛使用的隔离级别，特别是**读已提交**，**快照隔离**（有时称为可重复读）和**可序列化**。并通过研究竞争条件的各种例子，来描述这些隔离等级：
+
+***脏读***
+
+​	一个客户端读取到另一个客户端尚未提交的写入。**读已提交**或更强的隔离级别可以防止脏读。
+
+***脏写***
+
+​	一个客户端覆盖写入了另一个客户端尚未提交的写入。几乎所有的事务实现都可以防止脏写。
+
+***读取偏差（不可重复读）***
+
+​	在同一个事务中，客户端在不同的时间点会看见数据库的不同状态。**快照隔离**经常用于解决这个问题，它允许事务从一个特定时间点的一致性快照中读取数据。快照隔离通常使用**多版本并发控制（MVCC）** 来实现。
+
+***更新丢失***
+
+​	两个客户端同时执行**读取-修改-写入序列**。其中一个写操作，在没有合并另一个写入变更情况下，直接覆盖了另一个写操作的结果。所以导致数据丢失。快照隔离的一些实现可以自动防止这种异常，而另一些实现则需要手动锁定（`SELECT FOR UPDATE`）。
+
+***写偏差***
+
+​	一个事务读取一些东西，根据它所看到的值作出决定，并将该决定写入数据库。但是，写入时，该决定的前提不再是真实的。只有可序列化的隔离才能防止这种异常。
+
+***幻读***
+
+​	事务读取符合某些搜索条件的对象。另一个客户端进行写入，影响搜索结果。快照隔离可以防止直接的幻像读取，但是写入偏差上下文中的幻读需要特殊处理，例如索引范围锁定。
+
+​弱隔离级别可以防止其中一些异常情况，此外让应用程序开发人员手动处理剩余那些（例如，使用显式锁定）。只有可序列化的隔离才能防范所有这些问题。我们讨论了实现可序列化事务的三种不同方法：
+
+***字面意义上的串行执行***
+
+​	如果每个事务的执行速度非常快，并且事务吞吐量足够低，足以在单个CPU核上处理，这是一个简单而有效的选择。
+
+***两阶段锁定***
+
+​	数十年来，两阶段锁定一直是实现可序列化的标准方式，但是许多应用出于性能问题的考虑避免使用它。
+
+***可串行化快照隔离（SSI）***
+
+​	一个相当新的算法，避免了先前方法的大部分缺点。它使用乐观的方法，允许事务执行而无需阻塞。当一个事务想要提交时，它会进行检查，如果执行不可序列化，事务就会被中止。
+
+​	本章中的示例主要是在关系数据模型的上下文中。使用关系数据模型。但是，正如在讨论中，无论使用哪种数据模型，如“**[多对象事务的需求](#多对象事务的需求)**”中所讨论的，事务都是重要的数据库功能。
